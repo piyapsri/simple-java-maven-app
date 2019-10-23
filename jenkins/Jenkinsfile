@@ -28,3 +28,57 @@ pipeline {
         }
     }
 }
+pipeline {
+  agent {
+    docker {
+      image 'maven:3-alpine'
+      args '-v /root/.m2:/root/.m2'
+    }
+
+  }  
+//  environment {
+//    PATH = "/usr/local/bin:${env.PATH}"
+//  }
+  stages {
+    stage('Build') {
+      steps {
+        sh 'mvn -B -DskipTests clean package'
+      }
+    }
+    stage('Test') {
+      post {
+        always {
+          junit 'target/surefire-reports/*.xml'
+
+        }
+
+      }
+      steps {
+        sh 'mvn test'
+      }
+    }
+    stage('Deliver') {
+      steps {
+       withEnv(['PATH+EXTRA=/usr/sbin:/usr/bin:/sbin:/bin']) {
+        sh 'pwd'
+        sh 'whoami'
+        sh 'echo $PATH'
+        sh 'java -version'
+        sh 'javac -version'
+        sh 'ls -l ./jenkins/scripts/deliver.sh'
+        sh 'chmod +x ./jenkins/scripts/deliver.sh'        
+        sh 'ls -l ./jenkins/scripts/deliver.sh'
+//        sh "sed $'s/\r$//' ./jenkins/scripts/deliver.sh > ./jenkins/scripts/deliver_ok.sh"
+        sh "sed \$'s/\\r\$//' ./jenkins/scripts/deliver.sh > ./jenkins/scripts/deliver_ok.sh "  
+        sh 'chmod +x ./jenkins/scripts/deliver_ok.sh'        
+        sh 'ls -l ./jenkins/scripts/deliver_ok.sh'
+        sh './jenkins/scripts/deliver_ok.sh'
+//        sh 'ls -l ./jenkins/scripts/deliver_2.sh'
+//        sh 'chmod +x ./jenkins/scripts/deliver_2.sh'        
+//        sh 'ls -l ./jenkins/scripts/deliver_2.sh'
+//        sh './jenkins/scripts/deliver_2.sh'
+        }
+      }
+    }
+  }
+}
